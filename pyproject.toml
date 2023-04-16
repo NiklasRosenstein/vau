@@ -21,6 +21,11 @@ keywords = []
 
 [tool.poetry.dependencies]
 python = "^3.6"
+typer = "^0.7.0"
+hvac = "^1.1.0"
+rich = "^13.3.4"
+"databind.json" = "^4.2.4"
+typer-builder = "^0.0.8"
 
 [tool.poetry.dev-dependencies]
 black = "*"
@@ -28,6 +33,9 @@ flake8 = "*"
 isort = "*"
 mypy = "*"
 pytest = "*"
+
+[tool.poetry.scripts]
+vau = "vau.__main__:main"
 
 [tool.slap]
 typed = true
