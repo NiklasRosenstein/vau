@@ -45,7 +45,7 @@ branch = "main"
 [tool.slap.test]
 check = "slap check"
 mypy = "dmypy run src/"
-pytest = "pytest tests/ -vv"
+pytest = "pytest src/ tests/ -vv"
 black = "black --check src/ tests/"
 isort = "isort --check-only src/ tests/"
 flake8 = "flake8 src/ tests/"

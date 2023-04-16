@@ -10,10 +10,9 @@ from ._format import Format
 def main(
     client: AppRole,
     format: Format = Option(Format.default, "-o", "--format", help="Output format"),
-    mount_point: str = Option("approle", help="Approle mount point"),
 ) -> None:
     """List vault app roles."""
 
     role_names: list[str] = client.list_roles()["data"]["keys"]
-    roles = {role_name: client.read_role(role_name, mount_point=mount_point)["data"] for role_name in role_names}
+    roles = {role_name: client.read_role(role_name)["data"] for role_name in role_names}
     print(format.formatter.format_approles(roles))

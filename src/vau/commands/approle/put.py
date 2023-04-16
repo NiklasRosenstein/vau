@@ -44,7 +44,6 @@ def main(
         "24h", help="The maximum allowed period value when a periodic token is requested", metavar="DURATION"
     ),
     token_type: TokenType = Option(TokenType.DEFAULT, help="The type of token"),
-    mount_point: str = Option("approle", help="The mount point for the AppRole auth method", metavar="MOUNT_POINT"),
     format: Format = Option(Format.default, "-o", "--format", help="Output format"),
     *,
     client: AppRole,
@@ -67,8 +66,7 @@ def main(
         token_num_uses=token_num_uses,
         token_period=token_period,
         token_type=token_type,
-        mount_point=mount_point,
     )
 
-    role = client.read_role(role_name, mount_point=mount_point)["data"]
+    role = client.read_role(role_name)["data"]
     print(format.formatter.format_approle(role_name, role))
