@@ -14,5 +14,11 @@ def main(
     """List vault app roles."""
 
     role_names: list[str] = client.list_roles()["data"]["keys"]
-    roles = {role_name: client.read_role(role_name)["data"] for role_name in role_names}
+    roles = {
+        role_name: {
+            **client.read_role(role_name)["data"],
+            "role_id": client.read_role_id(role_name)["data"]["role_id"],
+        }
+        for role_name in role_names
+    }
     print(format.formatter.format_approles(roles))

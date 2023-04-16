@@ -28,6 +28,7 @@ class TokenType(str, Enum):
 
 def main(
     role_name: str = Argument(..., help="The name of the role to create"),
+    role_id: str | None = Option(None, help="A custom role ID to use. If not specified, one will be generated."),
     token_ttl: str = Option("1h", help="The TTL for the token"),
     token_max_ttl: str = Option("24h", help="The max TTL for the token"),
     policies: list[str] | None = Option(None, help="The policies for the token"),
@@ -67,6 +68,9 @@ def main(
         token_period=token_period,
         token_type=token_type,
     )
+
+    if role_id is not None:
+        client.update_role_id(role_name, role_id)
 
     role = client.read_role(role_name)["data"]
     print(format.formatter.format_approle(role_name, role))

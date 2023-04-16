@@ -1,7 +1,7 @@
 from vau.reflection import Reflection
 
 
-def test_reflection_into_behaves_different_than_wrapped_object():
+def test_reflection_into_behaves_different_than_wrapped_object() -> None:
     class A:
         def foo(self, a: int = 1) -> int:
             return a

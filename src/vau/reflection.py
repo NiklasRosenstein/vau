@@ -9,7 +9,7 @@ import functools
 import inspect
 from typing import Any, Callable, Iterable, TypeVar, cast
 
-from wrapt import ObjectProxy
+from wrapt import ObjectProxy  # type: ignore[import]
 
 T = TypeVar("T")
 
@@ -19,11 +19,12 @@ class Method:
         self.name = name
         self._refl = refl
         self._signature: inspect.Signature | None = None
+        self._wrapper: Callable[..., Any] | None = None
         self.kwargs: dict[str, Any] = {}
 
     @property
     def original(self) -> Callable[..., Any]:
-        return getattr(self._refl._obj, self.name)
+        return getattr(self._refl._obj, self.name)  # type: ignore[no-any-return]
 
     @property
     def signature(self) -> inspect.Signature:
@@ -31,14 +32,25 @@ class Method:
             self._signature = inspect.signature(self.original)
         return self._signature
 
+    def wrapper(self, wrapper: Callable[..., Any]) -> Callable[..., Any]:
+        self._wrapper = functools.wraps(self.original)(wrapper)
+        return wrapper
+
     def build(self) -> Callable[..., Any]:
         original = self.original
-        if not self.kwargs:
+        if not self.kwargs and self._wrapper is not None:
             return original
+
+        if not self.kwargs:
+            assert self._wrapper is not None
+            return self._wrapper
 
         @functools.wraps(original)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            return original(*args, **{**self.kwargs, **kwargs})
+            if self._wrapper is not None:
+                return self._wrapper(*args, **{**self.kwargs, **kwargs})
+            else:
+                return original(*args, **{**self.kwargs, **kwargs})
 
         return wrapper
 

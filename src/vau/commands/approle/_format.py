@@ -46,25 +46,6 @@ class DefaultFormatter(Formatter):
         else:
             return repr(value)
 
-    def _add_approle_to_rich_table(self, table: Table, role_name: str, approle: dict[str, Any]) -> None:
-        table.add_row(
-            role_name,
-            self._fmt_value(approle["token_ttl"]),
-            self._fmt_value(approle["token_max_ttl"]),
-            self._fmt_value(approle["token_policies"]),
-            self._fmt_value(approle["bind_secret_id"]),
-            self._fmt_value(approle["secret_id_bound_cidrs"]),
-            self._fmt_value(approle["secret_id_num_uses"]),
-            self._fmt_value(approle["secret_id_ttl"]),
-            self._fmt_value(approle["local_secret_ids"]),
-            self._fmt_value(approle["token_bound_cidrs"]),
-            self._fmt_value(approle["token_explicit_max_ttl"]),
-            self._fmt_value(approle["token_no_default_policy"]),
-            self._fmt_value(approle["token_num_uses"]),
-            self._fmt_value(approle["token_period"]),
-            self._fmt_value(approle["token_type"]),
-        )
-
     def format_approle(self, role_name: str, approle: dict[str, Any]) -> str:
         rows = [("Key", "Value")]
         for key in sorted(approle):
@@ -75,6 +56,7 @@ class DefaultFormatter(Formatter):
     def format_approles(self, approles: dict[str, dict[str, Any]]) -> str:
         table = Table()
         table.add_column("Role Name")
+        table.add_column("Role ID")
         table.add_column("Token Policies")
         table.add_column("Token TTL")
         table.add_column("Token Type")
@@ -82,9 +64,10 @@ class DefaultFormatter(Formatter):
         for role_name, approle in approles.items():
             table.add_row(
                 role_name,
+                approle["role_id"],
                 self._fmt_value(approle["token_policies"]),
                 self._fmt_value(approle["token_ttl"]),
-                self._fmt_value(approle["token_type"]),
+                approle["token_type"],
             )
 
         buffer = StringIO()
