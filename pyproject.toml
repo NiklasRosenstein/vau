@@ -13,10 +13,10 @@ classifiers = []
 keywords = []
 
 [tool.poetry.urls]
-# "Bug Tracker" = ""
+"Bug Tracker" = "https://github.com/NiklasRosenstein/vau/issues"
 # Documentation = ""
 # Homepage = ""
-# Repository = ""
+Repository = "https://github.com/NiklasRosenstein/vau"
 
 [tool.poetry.dependencies]
 python = "^3.6"
