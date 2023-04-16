@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from sys import stderr
+from typing import Optional
 
 from hvac import Client  # type: ignore[import]
 from rich import print
@@ -17,8 +18,7 @@ def callback(
     use: str | None = Option(None, help="The vault alias to use", metavar="ALIAS"),
     vault_addr: str | None = Option(None, help="The address of the vault server", envvar="VAULT_ADDR", metavar="URL"),
     token: str | None = Option(None, help="The vault token", envvar="VAULT_TOKEN", metavar="TOKEN"),
-    namespace: str
-    | None = Option(
+    namespace: Optional[str] = Option(
         None,
         help="The vault namespace",
         envvar="VAULT_NAMESPACE",
