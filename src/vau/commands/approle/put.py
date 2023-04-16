@@ -47,11 +47,11 @@ def main(
     mount_point: str = Option("approle", help="The mount point for the AppRole auth method", metavar="MOUNT_POINT"),
     format: Format = Option(Format.default, "-o", "--format", help="Output format"),
     *,
-    approle: AppRole,
+    client: AppRole,
 ) -> None:
     """Create or update a vault approle."""
 
-    approle.create_or_update_approle(
+    client.create_or_update_approle(
         role_name=role_name,
         bind_secret_id=bind_secret_id,
         secret_id_bound_cidrs=comma_flat_split(secret_id_bound_cidrs or []),
@@ -70,5 +70,5 @@ def main(
         mount_point=mount_point,
     )
 
-    role = approle.read_role(role_name, mount_point=mount_point)["data"]
+    role = client.read_role(role_name, mount_point=mount_point)["data"]
     print(format.formatter.format_approle(role_name, role))
