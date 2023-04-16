@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "vau"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 authors = ["Niklas Rosenstein <rosensteinniklas@gmail.com>"]
 license = "MIT"
@@ -39,6 +39,9 @@ vau = "vau.__main__:main"
 
 [tool.slap]
 typed = true
+
+[tool.slap.release]
+branch = "main"
 
 [tool.slap.test]
 check = "slap check"
