@@ -1,24 +1,17 @@
 from __future__ import annotations
 
 from hvac.api.auth_methods.approle import AppRole  # type: ignore[import]
-from rich import print
 from typer import Option
 
-from ._format import Format
+from . import list_roles
+from ._format import ApproleListFormat
 
 
 def main(
     client: AppRole,
-    format: Format = Option(Format.default, "-o", "--format", help="Output format"),
+    format: ApproleListFormat = Option(ApproleListFormat.table, "-o", "--format", help="Output format"),
 ) -> None:
     """List vault app roles."""
 
-    role_names: list[str] = client.list_roles()["data"]["keys"]
-    roles = {
-        role_name: {
-            **client.read_role(role_name)["data"],
-            "role_id": client.read_role_id(role_name)["data"]["role_id"],
-        }
-        for role_name in role_names
-    }
+    roles = list_roles(client)
     print(format.formatter.format_approles(roles))

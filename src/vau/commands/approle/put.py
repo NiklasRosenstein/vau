@@ -1,41 +1,39 @@
 from __future__ import annotations
 
 from enum import Enum
-from itertools import chain
-from typing import Iterable
+from typing import Optional
 
 from hvac.api.auth_methods.approle import AppRole  # type: ignore[import]
 from rich import print
-from typer import Argument, Option
+from typer import Option
 
-from ._format import Format
-
-
-def comma_flat_split(values: Iterable[str]) -> list[str]:
-    """Split a comma-separated list of values into a flat list of values."""
-    return list(chain.from_iterable(value.split(",") for value in values))
+from ._format import ApproleFormat
+from ._utils import comma_flat_split
 
 
 class TokenType(str, Enum):
     """The type of token."""
 
-    SERVICE = "service"
-    BATCH = "batch"
-    DEFAULT = "default"
-    DEFAULT_SERVICE = "default-service"
-    DEFAULT_BATCH = "default-batch"
+    service = "service"
+    batch = "batch"
+    default = "default"
+    default_service = "default-service"
+    default_batch = "default-batch"
 
 
 def main(
-    role_name: str = Argument(..., help="The name of the role to create"),
-    role_id: str | None = Option(None, help="A custom role ID to use. If not specified, one will be generated."),
-    token_ttl: str = Option("1h", help="The TTL for the token"),
-    token_max_ttl: str = Option("24h", help="The max TTL for the token"),
+    client: AppRole,
+    role_name: str = Option(..., help="The name of the role to create", metavar="ROLE_NAME"),
+    role_id: Optional[str] = Option(
+        None, help="A custom role ID to use. If not specified, one will be generated.", metavar="ROLE_ID"
+    ),
+    token_ttl: str = Option("1h", help="The TTL for the token", metavar="DURATION"),
+    token_max_ttl: str = Option("24h", help="The max TTL for the token", metavar="DURATION"),
     policies: list[str] | None = Option(None, help="The policies for the token"),
     bind_secret_id: bool = Option(True, help="Whether to bind the secret ID"),
-    secret_id_bound_cidrs: list[str] | None = Option(None, help="The CIDRs to bind the secret ID to"),
+    secret_id_bound_cidrs: list[str] | None = Option(None, help="The CIDRs to bind the secret ID to", metavar="CIDR"),
     secret_id_num_uses: int = Option(0, help="The number of uses for the secret ID"),
-    secret_id_ttl: str = Option("1h", help="The TTL for the secret ID"),
+    secret_id_ttl: str = Option("1h", help="The TTL for the secret ID", metavar="DURATION"),
     local_secret_ids: bool = Option(False, help="Whether to generate local secret IDs"),
     token_bound_cidrs: list[str] | None = Option(None, help="The CIDRs to bind the token to", metavar="CIDR"),
     token_explicit_max_ttl: str = Option("24h", help="The explicit max TTL for the token", metavar="DURATION"),
@@ -44,10 +42,8 @@ def main(
     token_period: str = Option(
         "24h", help="The maximum allowed period value when a periodic token is requested", metavar="DURATION"
     ),
-    token_type: TokenType = Option(TokenType.DEFAULT, help="The type of token"),
-    format: Format = Option(Format.default, "-o", "--format", help="Output format"),
-    *,
-    client: AppRole,
+    token_type: TokenType = Option(TokenType.default, help="The type of token"),
+    format: ApproleFormat = Option(ApproleFormat.json, "-o", "--format", help="Output format"),
 ) -> None:
     """Create or update a vault approle."""
 
@@ -72,5 +68,5 @@ def main(
     if role_id is not None:
         client.update_role_id(role_name, role_id)
 
-    role = client.read_role(role_name)["data"]
-    print(format.formatter.format_approle(role_name, role))
+    approle = client.read_role(role_name)["data"]
+    print(format.formatter.format_approle(approle))

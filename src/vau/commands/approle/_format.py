@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import builtins
 import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from functools import partial
 from io import StringIO
 from typing import Any
 
@@ -13,47 +11,69 @@ from rich.console import Console
 from rich.table import Table
 
 
-class Formatter(ABC):
+def _fmt_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    if value is None:
+        return "null"
+    return repr(value)
+
+
+###
+# ApproleFormatter
+
+
+class ApproleFormatter(ABC):
     """
     Abstract base class for formatting approles.
     """
 
     @abstractmethod
-    def format_approle(self, role_name: str, approle: dict[str, Any]) -> str:
+    def format_approle(self, approle: dict[str, Any]) -> str:
         ...
-
-    def format_approles(self, approles: dict[str, dict[str, Any]]) -> str:
-        buffer = StringIO()
-        print = partial(builtins.print, file=buffer)
-        for role_name, approle in approles.items():
-            print(self.format_approle(role_name, approle))
-        return buffer.getvalue().rstrip()
 
 
 @dataclass
-class DefaultFormatter(Formatter):
-    """
-    Default formatter for approles.
-    """
+class ApproleJsonFormatter(ApproleFormatter):
+    indent: int = 2
+    sort_keys: bool = True
 
-    def _fmt_value(self, value: Any) -> str:
-        if isinstance(value, list):
-            return repr(value)
-        elif isinstance(value, bool):
-            return str(value).lower()
-        elif value is None:
-            return "null"
+    def format_approle(self, approle: dict[str, Any]) -> str:
+        return json.dumps(approle, indent=self.indent, sort_keys=self.sort_keys)
+
+
+class ApproleFormat(str, Enum):
+    json = "json"
+
+    @property
+    def formatter(self) -> ApproleFormatter:
+        if self == ApproleFormat.json:
+            return ApproleJsonFormatter()
         else:
-            return repr(value)
+            raise ValueError(f"Unknown formatter: {self}")
 
-    def format_approle(self, role_name: str, approle: dict[str, Any]) -> str:
-        rows = [("Key", "Value")]
-        for key in sorted(approle):
-            rows.append((key, self._fmt_value(approle[key])))
-        max_width = max(len(key) for key, _ in rows)
-        return "\n".join(f"{key:<{max_width}} {value}" for key, value in rows)
 
-    def format_approles(self, approles: dict[str, dict[str, Any]]) -> str:
+###
+# ApproleListFormatter
+
+
+class ApproleListFormatter(ABC):
+    @abstractmethod
+    def format_approles(self, approles: list[dict[str, Any]]) -> str:
+        ...
+
+
+@dataclass
+class ApproleListJsonFormatter(ApproleListFormatter):
+    indent: int = 2
+    sort_keys: bool = True
+
+    def format_approles(self, approles: list[dict[str, Any]]) -> str:
+        return json.dumps(approles, indent=self.indent, sort_keys=self.sort_keys)
+
+
+class ApproleListTableFormatter(ApproleListFormatter):
+    def format_approles(self, approles: list[dict[str, Any]]) -> str:
         table = Table()
         table.add_column("Role Name")
         table.add_column("Role ID")
@@ -61,12 +81,12 @@ class DefaultFormatter(Formatter):
         table.add_column("Token TTL")
         table.add_column("Token Type")
 
-        for role_name, approle in approles.items():
+        for approle in approles:
             table.add_row(
-                role_name,
+                approle["role_name"],
                 approle["role_id"],
-                self._fmt_value(approle["token_policies"]),
-                self._fmt_value(approle["token_ttl"]),
+                _fmt_value(approle["token_policies"]),
+                _fmt_value(approle["token_ttl"]),
                 approle["token_type"],
             )
 
@@ -75,24 +95,98 @@ class DefaultFormatter(Formatter):
         return buffer.getvalue().rstrip()
 
 
-class JsonFormatter(Formatter):
-    def format_approle(self, role_name: str, approle: dict[str, Any]) -> str:
-        return json.dumps(approle, indent=2)
-
-    def format_approles(self, approles: dict[str, dict[str, Any]]) -> str:
-        return json.dumps(approles, indent=2)
-
-
-class Format(str, Enum):
-    default = "default"
-    full = "full"
+class ApproleListFormat(str, Enum):
+    table = "table"
     json = "json"
 
     @property
-    def formatter(self) -> Formatter:
-        if self == Format.default:
-            return DefaultFormatter()
-        elif self == Format.json:
-            return JsonFormatter()
+    def formatter(self) -> ApproleListFormatter:
+        if self == ApproleListFormat.table:
+            return ApproleListTableFormatter()
+        elif self == ApproleListFormat.json:
+            return ApproleListJsonFormatter()
+        else:
+            raise ValueError(f"Unknown formatter: {self}")
+
+
+###
+# SecretIdFormatter
+
+
+class SecretIdFormatter(ABC):
+    @abstractmethod
+    def format_secretid(self, secretid: dict[str, Any]) -> str:
+        ...
+
+
+class SecretIdJsonFormatter(SecretIdFormatter):
+    indent: int = 2
+    sort_keys: bool = True
+
+    def format_secretid(self, secretid: dict[str, Any]) -> str:
+        return json.dumps(secretid, indent=self.indent, sort_keys=self.sort_keys)
+
+
+class SecretIdFormat(str, Enum):
+    json = "json"
+
+    @property
+    def formatter(self) -> SecretIdFormatter:
+        if self == SecretIdFormat.json:
+            return SecretIdJsonFormatter()
+        else:
+            raise ValueError(f"Unknown formatter: {self}")
+
+
+###
+# SecretIdAccessorListFormatter
+
+
+class SecretIdAccessorListFormatter(ABC):
+    @abstractmethod
+    def format_secretidaccessors(self, secretidaccessors: list[dict[str, Any]]) -> str:
+        ...
+
+
+@dataclass
+class SecretIdAccessorListJsonFormatter(SecretIdAccessorListFormatter):
+    indent: int = 2
+    sort_keys: bool = True
+
+    def format_secretidaccessors(self, secretidaccessors: list[dict[str, Any]]) -> str:
+        return json.dumps(secretidaccessors, indent=self.indent, sort_keys=self.sort_keys)
+
+
+class SecretIdAccessorListTableFormatter(SecretIdAccessorListFormatter):
+    def format_secretidaccessors(self, secretidaccessors: list[dict[str, Any]]) -> str:
+        table = Table()
+        table.add_column("Secret Accessor ID")
+        table.add_column("Creation Time")
+        table.add_column("Expiration Time")
+        table.add_column("Metadata")
+
+        for secretidaccessor in secretidaccessors:
+            table.add_row(
+                secretidaccessor["accessor_id"],
+                secretidaccessor["creation_time"],
+                secretidaccessor["expiration_time"],
+                json.dumps(secretidaccessor["metadata"]),
+            )
+
+        buffer = StringIO()
+        Console(file=buffer).print(table)
+        return buffer.getvalue().rstrip()
+
+
+class SecretIdAccessorListFormat(str, Enum):
+    table = "table"
+    json = "json"
+
+    @property
+    def formatter(self) -> SecretIdAccessorListFormatter:
+        if self == SecretIdAccessorListFormat.table:
+            return SecretIdAccessorListTableFormatter()
+        elif self == SecretIdAccessorListFormat.json:
+            return SecretIdAccessorListJsonFormatter()
         else:
             raise ValueError(f"Unknown formatter: {self}")
